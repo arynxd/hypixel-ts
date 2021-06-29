@@ -1,4 +1,5 @@
 import Authentication from "../model/Authentication";
+import RateLimitedError from "../exception/RateLimitedError";
 
 export default class RateLimiter {
     private static readonly MINUTE = 60 * 1000
@@ -19,7 +20,7 @@ export default class RateLimiter {
 
     public take() {
         if (!this.canTake()) {
-            throw new Error("RateLimit exceeded")
+            throw new RateLimitedError("RateLimit exceeded")
         }
         this.remaining--
         if (this.lastUsed > (Date.now() - RateLimiter.MINUTE)) {

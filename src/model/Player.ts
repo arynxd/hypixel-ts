@@ -1,15 +1,62 @@
+import Hypixel from "../Hypixel";
+import {Routes} from "../route/Route";
 
+export default class Player {
+    public readonly uuid: string
+    public readonly displayName: string
+    public readonly rank: string
+    public readonly packageRank: string
+    public readonly newPackageRank: string
+    public readonly monthlyPackageRank: string
+    public readonly firstLogin: number
+    public readonly lastLogin: number
+    public readonly lastLogout: number
+    public readonly stats: object
+    public readonly friends: Player[]
 
-export default interface Player {
-    uuid: string
-    displayName: string
-    rank: string
-    packageRank: string
-    newPackageRank: string
-    monthlyPackageRank: string
-    firstLogin: number
-    lastLogin: number
-    lastLogout: number
-    stats: object,
-    friends: Player[]
+    private readonly api
+
+    constructor(
+        uuid: string,
+        displayName: string,
+        rank: string,
+        packageRank: string,
+        newPackageRank: string,
+        monthlyPackageRank: string,
+        firstLogin: number,
+        lastLogin: number,
+        lastLogout: number,
+        stats: object,
+        friends: Player[],
+        api: Hypixel
+    ) {
+        this.uuid = uuid
+        this.displayName = displayName
+        this.rank = rank
+        this.packageRank = packageRank
+        this.newPackageRank = newPackageRank
+        this.monthlyPackageRank = monthlyPackageRank
+        this.firstLogin = firstLogin
+        this.lastLogin = lastLogin
+        this.lastLogout = lastLogout
+        this.stats = stats
+        this.friends = friends
+        this.api = api
+    }
+
+    public async fetchFriends(): Promise<Player[]> {
+        const route = Routes.Player.GET_FRIENDS.compile({ 'uuid': this.uuid })
+        const friends = this.api.requester.request<Promise<Player[]>>(route, true, async data => { //Array of promises representing all the fetched friends
+            const arr: Promise<Player>[] = []
+            for (const id of data.records) {
+                const playerRoute = Routes.Player.GET.compile({ 'uuid': id })
+                const req = this.api.requester.request<Player>(playerRoute, true, playerData => {
+                    return this.api.entityBuilder.createPlayer(playerData, this.api)
+                })
+                arr.push(req)
+            }
+            return await Promise.all<Player>(arr)
+        })
+        return await friends
+    }
 }

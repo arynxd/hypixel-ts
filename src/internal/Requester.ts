@@ -1,41 +1,39 @@
 import Hypixel from "../Hypixel";
 import {CompiledRoute, RouteMethod} from "../route/Route";
-import axios, {AxiosResponse} from "axios";
+import axios, {AxiosError, AxiosResponse} from "axios";
 import Logger from "../util/Logger";
 import RateLimitedError from "../exception/RateLimitedError";
-import RateLimiter from "./RateLimiter";
 import HypixelResponseError from "../exception/HypixelResponseError";
+import {extractMessage} from "../util/error";
 
 export default class Requester {
     private readonly api
+    private canRequest = true
 
     constructor(api: Hypixel) {
         this.api = api
     }
 
+    public shutdown() {
+        this.canRequest = false
+    }
+
     public async request<T>(
         route: CompiledRoute,
-        headers: any | undefined = undefined,
-        body: any | undefined = undefined,
-        checkRateLimits: boolean = true,
+        checkRateLimits: boolean,
         fn: (data: any) => T
     ): Promise<T> {
-        if (!this.api.rateLimiter?.canTake() && checkRateLimits) {
+        if (checkRateLimits && !this.api.rateLimiter.canTake()) {
             throw new RateLimitedError(`Encountered ratelimit on route ${route.url}`)
         }
 
-        headers['Api-Key'] = this.api.auth.token
-
-        let res
-        switch (route.method) {
-            case RouteMethod.GET:
-                res = await Requester.get(route, headers, body)
-                break
-            default:
-                const err = new Error(`Invalid route method ${route.method}`)
-                Logger.error(err)
-                throw err
+        if (!this.canRequest) {
+            throw new Error("The requester is shutdown, no new requests can be made!")
         }
+
+        route.headers['Api-Key'] = this.api.auth.token
+
+        const res = await Requester.doRequest(route)
 
         if (!res.data.success) {
             const err = new Error(`Encountered error on route ${route.url}. Cause ${res.data.cause}`)
@@ -43,24 +41,45 @@ export default class Requester {
             throw err
         }
 
-        this.api.rateLimiter?.take()
+        if (checkRateLimits) {
+            this.api.rateLimiter.take()
+        }
 
         return fn(res.data)
     }
 
-    private static async get(route: CompiledRoute, headers: any| undefined, body: any | undefined): Promise<AxiosResponse> {
+    private static async doRequest(route: CompiledRoute): Promise<AxiosResponse> {
+        let config: any = {};
+        config.headers = route.headers
+        config.data = route.body
+        let promise: Promise<AxiosResponse>
+        switch (route.method) {
+            case RouteMethod.GET:
+                config.method = "GET"
+                promise = axios.get(route.url, config)
+                break
+            case RouteMethod.DELETE:
+                config.method = "DELETE"
+                promise = axios.delete(route.url, config)
+                break
+            default:
+                const err = new Error(`Invalid route method ${route.method}`)
+                Logger.error(err)
+                throw err
+        }
+
         try {
-            return await axios.get(route.url, {
-                    headers: headers,
-                    method: "GET",
-                    params: body
-                }
-            )
+            return await promise
         }
         catch (error) {
-            const err = new HypixelResponseError(`Encountered error on route ${route.url}: ${error.message}`)
-            Logger.error(err)
-            throw err
+            throw this.formatError(error, route)
         }
+    }
+    private static formatError(error: AxiosError, route: CompiledRoute): HypixelResponseError {
+        let message = extractMessage(error, route.url)
+
+        const err = new HypixelResponseError(message)
+        Logger.error(err)
+        return err
     }
 }
