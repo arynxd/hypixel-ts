@@ -36,9 +36,7 @@ export default class Requester {
         const res = await Requester.doRequest(route)
 
         if (!res.data.success) {
-            const err = new Error(`Encountered error on route ${route.url}. Cause ${res.data.cause}`)
-            Logger.error(err)
-            throw err
+            throw Logger.error(new Error(`Encountered error on route ${route.url}. Cause ${res.data.cause}`))
         }
 
         if (checkRateLimits) {
@@ -63,9 +61,7 @@ export default class Requester {
                 promise = axios.delete(route.url, config)
                 break
             default:
-                const err = new Error(`Invalid route method ${route.method}`)
-                Logger.error(err)
-                throw err
+                throw Logger.error(new Error(`Invalid route method ${route.method}`))
         }
 
         try {

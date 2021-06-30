@@ -11,7 +11,8 @@ export default class Logger {
         console.log("[INFO] [HYPIXEL] " + message)
     }
 
-    public static error(err: Error) {
+    public static error(err: Error): Error {
         console.error("[ERR] [HYPIXEL] " + err.message)
+        return err
     }
 }

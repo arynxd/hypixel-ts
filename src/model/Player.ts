@@ -1,5 +1,6 @@
 import Hypixel from "../Hypixel";
 import {Routes} from "../route/Route";
+import Game from "./Game";
 
 export default class Player {
     public readonly uuid: string
@@ -58,5 +59,16 @@ export default class Player {
             return await Promise.all<Player>(arr)
         })
         return await friends
+    }
+
+    public async fetchRecentGames(): Promise<Game[]> {
+        const route =Routes.Player.GET_RECENT_GAMES.compile({ 'uuid': this.uuid })
+        return this.api.requester.request(route, true, data => {
+            data = data.games
+            const arr = []
+            for (const game of data)
+                arr.push(this.api.entityBuilder.createGame(game, this, this.api))
+            return arr
+        })
     }
 }
