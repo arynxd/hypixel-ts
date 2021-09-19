@@ -2,6 +2,7 @@ import Hypixel from "../Hypixel";
 import Player from "../model/Player";
 import Game from "../model/Game";
 import GameType from "../model/GameType";
+import EmptyPlayer from "../model/EmptyPlayer";
 
 export default class EntityBuilder {
     private readonly api
@@ -27,7 +28,7 @@ export default class EntityBuilder {
         )
     }
 
-    public createGame(data: any, player: Player | undefined, api: Hypixel): Game {
+    public createGame(data: any, player: Player, api: Hypixel): Game {
         return {
             date: data.date,
             ended: data.ended,

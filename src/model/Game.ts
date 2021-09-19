@@ -7,5 +7,5 @@ export default interface Game {
     mode: string
     map: string
     ended: number,
-    player?: Player
+    player: Player
 }
