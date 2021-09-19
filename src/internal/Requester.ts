@@ -5,6 +5,7 @@ import Logger from "../util/Logger";
 import RateLimitedError from "../exception/RateLimitedError";
 import HypixelResponseError from "../exception/HypixelResponseError";
 import {extractMessage} from "../util/error";
+import RateLimiter from "./RateLimiter";
 
 export default class Requester {
     private readonly api
@@ -47,7 +48,7 @@ export default class Requester {
     }
 
     private static async doRequest(route: CompiledRoute): Promise<AxiosResponse> {
-        let config: any = {};
+        let config: any = {'method': 'GET'};
         config.headers = route.headers
         config.data = route.body
         let promise: Promise<AxiosResponse>
@@ -65,7 +66,7 @@ export default class Requester {
         }
 
         try {
-            return await promise
+            return await axios.get(route.url, config)
         }
         catch (error) {
             throw this.formatError(error, route)

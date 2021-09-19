@@ -49,4 +49,8 @@ export class Routes {
         public static readonly GET_FRIENDS = new Route(Routes.BASE_URL + "/friends", RouteMethod.GET, 1)
         public static readonly GET_RECENT_GAMES = new Route(Routes.BASE_URL + "/recentgames", RouteMethod.GET, 1)
     }
+
+    public static readonly Guild = class {
+        public static readonly GET = new Route(Routes.BASE_URL + "/guild", RouteMethod.GET, 1)
+    }
 }

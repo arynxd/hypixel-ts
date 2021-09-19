@@ -3,19 +3,19 @@ import {Routes} from "../route/Route";
 import Game from "./Game";
 
 export default class Player {
-    public readonly uuid: string
-    public readonly displayName: string
-    public readonly rank: string
-    public readonly packageRank: string
-    public readonly newPackageRank: string
-    public readonly monthlyPackageRank: string
-    public readonly firstLogin: number
-    public readonly lastLogin: number
-    public readonly lastLogout: number
-    public readonly stats: object
-    public readonly friends: Player[]
+    public readonly uuid
+    public readonly displayName
+    public readonly rank
+    public readonly packageRank
+    public readonly newPackageRank
+    public readonly monthlyPackageRank
+    public readonly firstLogin
+    public readonly lastLogin
+    public readonly lastLogout
+    public readonly stats
+    public readonly friends
 
-    private readonly api
+    public readonly api
 
     constructor(
         uuid: string,
@@ -62,7 +62,7 @@ export default class Player {
     }
 
     public async fetchRecentGames(): Promise<Game[]> {
-        const route =Routes.Player.GET_RECENT_GAMES.compile({ 'uuid': this.uuid })
+        const route = Routes.Player.GET_RECENT_GAMES.compile({ 'uuid': this.uuid })
         return this.api.requester.request(route, true, data => {
             data = data.games
             const arr = []

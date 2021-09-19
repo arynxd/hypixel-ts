@@ -9,6 +9,7 @@ import HypixelResponseError from "./exception/HypixelResponseError";
 import {extractMessage} from "./util/error";
 import Checks from "./util/Checks";
 import Game from "./model/Game";
+import EmptyPlayer from "./model/EmptyPlayer";
 
 export default class Hypixel {
     private state = HypixelState.BUILT
@@ -114,7 +115,7 @@ export default class Hypixel {
             data = data.games
             const arr = []
             for (const game of data)
-                arr.push(this.entityBuilder.createGame(game, undefined, this))
+                arr.push(this.entityBuilder.createGame(game, new EmptyPlayer(uuid, this), this))
             return arr
         })
     }
@@ -134,6 +135,12 @@ export default class Hypixel {
             return await Promise.all<Player>(arr)
         })
         return await friends
+    }
+
+    public async fetchGuildByPlayerId(uuid: string): Promise<any> {
+        Checks.isUUID(uuid, "Provided UUID")
+        const route = Routes.Guild.GET.compile({'player': uuid})
+        return await this.requester.request(route, true, data => data)
     }
 }
 
